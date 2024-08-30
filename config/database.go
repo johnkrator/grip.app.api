@@ -2,15 +2,14 @@ package config
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"time"
-
-	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func SetupDatabase() (*gorm.DB, error) {
@@ -90,15 +89,16 @@ func backupDatabase(host, port, user, password, dbname string) error {
 		fmt.Printf("Backup will be saved to: %s\n", absBackupPath)
 	}
 
-	// Construct the pg_dump command
+	// Construct the pg_dump command to output plain SQL
 	cmd := exec.Command("C:\\Program Files\\PostgreSQL\\15\\bin\\pg_dump",
 		"-h", host,
 		"-p", port,
 		"-U", user,
 		"-d", dbname,
 		"-f", backupPath,
-		"-Z", "9", // Add compression (0-9, 9 is best compression)
-		"-Fc") // Use custom format for more flexible restores
+		"--format=p",      // Use plain text format
+		"--no-owner",      // Exclude ownership commands
+		"--no-privileges") // Exclude privilege commands
 
 	// Set the PGPASSWORD environment variable
 	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", password))

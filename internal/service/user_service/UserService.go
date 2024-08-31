@@ -178,8 +178,15 @@ func (s *UserService) LoginUser(req *request.UserLoginRequestDto) (*response.Use
 }
 
 func generateAccountNumber() string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf("%010d", rand.Intn(9000000000)+1000000000)
+	// Create a new random number generator with a seed based on the current time
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+
+	// Generate a random number for the last 7 digits
+	lastSevenDigits := r.Intn(10000000) // 7-digit number from 0000000 to 9999999
+
+	// Combine the fixed "077" prefix with the random 7-digit number
+	return fmt.Sprintf("077%07d", lastSevenDigits)
 }
 
 func init() {

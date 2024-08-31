@@ -2,8 +2,14 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"grip.app.api/api"
 	config2 "grip.app.api/config"
+	"grip.app.api/internal/controller"
 	"grip.app.api/internal/models"
+	"grip.app.api/internal/repository/account_repo"
+	"grip.app.api/internal/repository/user_profile_repo"
+	"grip.app.api/internal/repository/user_repo"
+	interface_implementations2 "grip.app.api/internal/service/user_service"
 )
 
 func Run() error {
@@ -14,13 +20,16 @@ func Run() error {
 
 	models.SetupRelations(db)
 
-	//userRepo := userRepository.NewUserRepository(db)
-	//newUserService := userService.NewUserService(userRepo)
-	//userController := controllers.NewUserController(newUserService)
+	userRepo := user_repo.NewUserRepository(db)
+	userProfileRepo := user_profile_repo.NewUserProfileRepository(db)
+	accountRepo := account_repo.NewAccountRepository(db)
+
+	newUserService := interface_implementations2.NewUserService(userRepo, userProfileRepo, accountRepo)
+	userController := controller.NewUserController(newUserService)
 
 	r := gin.Default()
 	gin.SetMode(gin.DebugMode)
-	//routes.SetupRoutes(r, userController, orderController)
+	api.SetupRoutes(r, userController)
 
 	return r.Run(":8080")
 }

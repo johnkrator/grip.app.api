@@ -1,4 +1,220 @@
+basePath: /
+definitions:
+  gin.H:
+    additionalProperties: {}
+    type: object
+  request.UserLoginRequestDto:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  request.UserRegistrationRequestDto:
+    properties:
+      address:
+        type: string
+      dateOfBirth:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      incomeRange:
+        type: string
+      lastName:
+        type: string
+      occupation:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      phoneNumber:
+        type: string
+      preferences:
+        type: string
+      riskTolerance:
+        type: string
+    required:
+    - address
+    - dateOfBirth
+    - email
+    - firstName
+    - incomeRange
+    - lastName
+    - occupation
+    - password
+    - phoneNumber
+    - riskTolerance
+    type: object
+  response.AccountResponseDto:
+    properties:
+      accountNumber:
+        type: string
+      accountType:
+        type: string
+      balance:
+        type: number
+      currency:
+        type: string
+      status:
+        type: string
+    type: object
+  response.Role:
+    enum:
+    - admin
+    - manager
+    - employee
+    - customer
+    type: string
+    x-enum-varnames:
+    - AdminRole
+    - ManagerRole
+    - EmployeeRole
+    - CustomerRole
+  response.UserLoginResponseDto:
+    properties:
+      accessToken:
+        type: string
+      address:
+        type: string
+      dateOfBirth:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      isDeleted:
+        type: boolean
+      isVerified:
+        type: boolean
+      lastName:
+        type: string
+      phoneNumber:
+        type: string
+      refreshToken:
+        type: string
+      role:
+        $ref: '#/definitions/response.Role'
+    type: object
+  response.UserProfileResponseDto:
+    properties:
+      incomeRange:
+        type: string
+      occupation:
+        type: string
+      preferences:
+        type: string
+      riskTolerance:
+        type: string
+    type: object
+  response.UserRegistrationResponseDto:
+    properties:
+      account:
+        $ref: '#/definitions/response.AccountResponseDto'
+      address:
+        type: string
+      dateOfBirth:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      phoneNumber:
+        type: string
+      profile:
+        $ref: '#/definitions/response.UserProfileResponseDto'
+      role:
+        $ref: '#/definitions/response.Role'
+    type: object
+host: localhost:8080
 info:
   contact: {}
-paths: {}
+  description: This is a Grip service API.
+  title: Grip API
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: Get a welcome message
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Welcome message
+      tags:
+      - welcome
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user with the provided credentials
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserLoginRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UserLoginResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Login a user
+      tags:
+      - users
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the input payload
+      parameters:
+      - description: Register user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserRegistrationRequestDto'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.UserRegistrationResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Register a new user
+      tags:
+      - users
 swagger: "2.0"

@@ -6,16 +6,30 @@ import (
 	"time"
 )
 
+type Role string
+
+const (
+	AdminRole    Role = "admin"
+	ManagerRole  Role = "manager"
+	EmployeeRole Role = "employee"
+	CustomerRole Role = "customer"
+)
+
 type User struct {
 	base.BaseModel
-	FirstName   string
-	LastName    string
-	Email       string `gorm:"uniqueIndex"`
-	PhoneNumber string
-	DateOfBirth time.Time
-	Address     string
-	Password    string
-	Role        string
+	FirstName    string
+	LastName     string
+	Email        string `gorm:"uniqueIndex"`
+	PhoneNumber  string
+	DateOfBirth  time.Time
+	Address      string
+	Password     string
+	AccessToken  string `gorm:"default:null"`
+	RefreshToken string `gorm:"default:null"`
+	IsVerified   bool   `gorm:"default:false"`
+	IsAdmin      bool   `gorm:"default:false"`
+	IsDeleted    bool   `gorm:"default:false"`
+	Role         Role   `gorm:"default:customer"`
 }
 
 func (baseUser *User) HashPassword() error {

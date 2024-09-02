@@ -54,3 +54,12 @@ func (r *UserRepository) UpdateUserToken(userID uuid.UUID, token string, expirat
 		"token_expiration": expiration,
 	}).Error
 }
+
+func (r *UserRepository) GetUserByResetToken(token string) (*models.User, error) {
+	var user models.User
+	result := r.db.Where("reset_password_token = ?", token).First(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
+}

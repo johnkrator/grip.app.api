@@ -15,4 +15,5 @@ type IUserRepository interface {
 	UpdateUser(user *models.User) error
 	GetUserByID(id uint) (*models.User, error)
 	UpdateUserToken(userID uuid.UUID, token string, expiration time.Time) error
+	GetUserByResetToken(token string) (*models.User, error)
 }

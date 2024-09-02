@@ -229,6 +229,92 @@ func (s *UserService) VerifyEmail(email, token string) error {
 	return nil
 }
 
+func (s *UserService) ChangePassword(userID uint, req *request.ChangePasswordRequestDto) error {
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return utils.ErrUserNotFound
+	}
+
+	// Verify current password
+	if err := user.ComparePassword(req.CurrentPassword); err != nil {
+		return utils.ErrInvalidCredentials
+	}
+
+	// Update password
+	user.Password = req.NewPassword
+	if err := user.HashPassword(); err != nil {
+		return err
+	}
+
+	// Save updated user
+	if err := s.userRepo.UpdateUser(user); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) ForgotPassword(email string) error {
+	user, err := s.userRepo.GetUserByEmail(email)
+	if err != nil {
+		return utils.ErrUserNotFound
+	}
+
+	// Generate a reset token
+	resetToken, err := utils.GenerateRandomToken(32)
+	if err != nil {
+		return err
+	}
+
+	// Set token expiration (e.g., 1 hour from now)
+	tokenExpiration := time.Now().Add(1 * time.Hour)
+
+	// Update user with reset token and expiration
+	user.ResetPasswordToken = resetToken
+	user.ResetPasswordExpires = tokenExpiration
+
+	if err := s.userRepo.UpdateUser(user); err != nil {
+		return err
+	}
+
+	// Send password reset email
+	resetLink := "https://localhost:8080/reset-password?token=" + resetToken
+	err = email_send_config.SendPasswordResetEmail(user.Email, user.FirstName, resetLink)
+	if err != nil {
+		utils.ErrorLogger.Printf("Failed to send password reset email: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) ResetPassword(req *request.ResetPasswordRequestDto) error {
+	user, err := s.userRepo.GetUserByResetToken(req.Token)
+	if err != nil {
+		return utils.ErrInvalidToken
+	}
+
+	if time.Now().After(user.ResetPasswordExpires) {
+		return utils.ErrTokenExpired
+	}
+
+	// Update user's password
+	user.Password = req.NewPassword
+	if err := user.HashPassword(); err != nil {
+		return err
+	}
+
+	// Clear reset token fields
+	user.ResetPasswordToken = ""
+	user.ResetPasswordExpires = time.Time{}
+
+	if err := s.userRepo.UpdateUser(user); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func generateAccountNumber() string {
 	// Create a new random number generator with a seed based on the current time
 	source := rand.NewSource(time.Now().UnixNano())

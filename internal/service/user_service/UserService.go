@@ -238,7 +238,7 @@ func generateAccountNumber() string {
 	lastSevenDigits := r.Intn(10000000) // 7-digit number from 0000000 to 9999999
 
 	// Combine the fixed "077" prefix with the random 7-digit number
-	return fmt.Sprintf("077%07d", lastSevenDigits)
+	return fmt.Sprintf("001%07d", lastSevenDigits)
 }
 
 func init() {

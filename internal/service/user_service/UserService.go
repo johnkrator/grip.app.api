@@ -1,12 +1,15 @@
 package user_service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/shopspring/decimal"
 	"grip.app.api/internal/dtos/request"
 	"grip.app.api/internal/dtos/response"
+	"grip.app.api/internal/middleware/email_send_config"
 	"grip.app.api/internal/models"
 	"grip.app.api/internal/repository/account_repo"
 	"grip.app.api/internal/repository/user_profile_repo"
@@ -86,7 +89,7 @@ func (s *UserService) CreateUser(req *request.UserRegistrationRequestDto) (*resp
 
 	account := &models.Account{
 		UserID:        user.ID,
-		AccountType:   models.CurrentAccount,
+		AccountType:   models.SavingsAccount,
 		AccountNumber: generateAccountNumber(),
 		Balance:       decimal.NewFromFloat(0),
 		Currency:      models.USD,
@@ -102,6 +105,24 @@ func (s *UserService) CreateUser(req *request.UserRegistrationRequestDto) (*resp
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return nil, err
+	}
+
+	// Generate 6-digit token
+	token, err := s.generateToken(user.ID)
+	if err != nil {
+		utils.ErrorLogger.Printf("Failed to generate token: %v", err)
+		return nil, err
+	}
+
+	// Send registration email with token and account number
+	err = email_send_config.SendRegistrationEmail(user.Email, user.FirstName, user.LastName, account.AccountNumber, token)
+	if err != nil {
+		utils.ErrorLogger.Printf("Failed to send registration email: %v", err)
+		// Log more details about the environment variables
+		utils.ErrorLogger.Printf("SMTP_SERVER: %s", os.Getenv("SMTP_SERVER"))
+		utils.ErrorLogger.Printf("SMTP_PORT: %s", os.Getenv("SMTP_PORT"))
+		utils.ErrorLogger.Printf("SMTP_USER: %s", os.Getenv("SMTP_USER"))
+		utils.ErrorLogger.Printf("FROM_EMAIL: %s", os.Getenv("FROM_EMAIL"))
 	}
 
 	return &response.UserRegistrationResponseDto{
@@ -134,6 +155,11 @@ func (s *UserService) LoginUser(req *request.UserLoginRequestDto) (*response.Use
 	if err != nil {
 		utils.ErrorLogger.Printf("Failed to get user by email: %v", err)
 		return nil, utils.ErrInvalidCredentials
+	}
+
+	if !user.IsVerified {
+		utils.ErrorLogger.Printf("User not verified: %s", req.Email)
+		return nil, errors.New("email not verified")
 	}
 
 	if err := user.ComparePassword(req.Password); err != nil {
@@ -175,6 +201,32 @@ func (s *UserService) LoginUser(req *request.UserLoginRequestDto) (*response.Use
 		IsDeleted:    user.IsDeleted,
 		Role:         response.Role(user.Role),
 	}, nil
+}
+
+func (s *UserService) VerifyEmail(email, token string) error {
+	user, err := s.userRepo.GetUserByEmail(email)
+	if err != nil {
+		return err
+	}
+
+	if user.Token != token {
+		return errors.New("invalid token")
+	}
+
+	if time.Now().After(user.TokenExpiration) {
+		return errors.New("token has expired")
+	}
+
+	user.IsVerified = true
+	user.Token = ""
+	user.TokenExpiration = time.Time{}
+
+	err = s.userRepo.UpdateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func generateAccountNumber() string {
@@ -226,4 +278,33 @@ func generateTokens(user *models.User) (string, string, error) {
 	}
 
 	return accessTokenString, refreshTokenString, nil
+}
+
+func (s *UserService) generateToken(userID uuid.UUID) (string, error) {
+	token := fmt.Sprintf("%06d", rand.Intn(1000000))
+	expirationTime := time.Now().Add(15 * time.Minute)
+
+	err := s.userRepo.UpdateUserToken(userID, token, expirationTime)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (s *UserService) validateToken(userID uint, token string) (bool, error) {
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return false, err
+	}
+
+	if user.Token != token {
+		return false, nil
+	}
+
+	if time.Now().After(user.TokenExpiration) {
+		return false, nil
+	}
+
+	return true, nil
 }

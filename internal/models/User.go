@@ -17,19 +17,21 @@ const (
 
 type User struct {
 	base.BaseModel
-	FirstName    string
-	LastName     string
-	Email        string `gorm:"uniqueIndex"`
-	PhoneNumber  string
-	DateOfBirth  time.Time
-	Address      string
-	Password     string
-	AccessToken  string `gorm:"default:null"`
-	RefreshToken string `gorm:"default:null"`
-	IsVerified   bool   `gorm:"default:false"`
-	IsAdmin      bool   `gorm:"default:false"`
-	IsDeleted    bool   `gorm:"default:false"`
-	Role         Role   `gorm:"default:customer"`
+	FirstName       string
+	LastName        string
+	Email           string `gorm:"uniqueIndex"`
+	PhoneNumber     string
+	DateOfBirth     time.Time
+	Address         string
+	Password        string
+	AccessToken     string `gorm:"default:null"`
+	RefreshToken    string `gorm:"default:null"`
+	IsVerified      bool   `gorm:"default:false"`
+	IsAdmin         bool   `gorm:"default:false"`
+	IsDeleted       bool   `gorm:"default:false"`
+	Role            Role   `gorm:"default:customer"`
+	Token           string `gorm:"default:null"`
+	TokenExpiration time.Time
 }
 
 func (baseUser *User) HashPassword() error {

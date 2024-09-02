@@ -3,6 +3,35 @@ definitions:
   gin.H:
     additionalProperties: {}
     type: object
+  request.ChangePasswordRequestDto:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        minLength: 8
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  request.ForgotPasswordRequestDto:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  request.ResetPasswordRequestDto:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
   request.UserLoginRequestDto:
     properties:
       email:
@@ -58,6 +87,47 @@ definitions:
       currency:
         type: string
       status:
+        type: string
+    type: object
+  response.ChangePasswordResponse:
+    properties:
+      accessToken:
+        type: string
+      address:
+        type: string
+      dateOfBirth:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      isDeleted:
+        type: boolean
+      isVerified:
+        type: boolean
+      lastName:
+        type: string
+      message:
+        type: string
+      phoneNumber:
+        type: string
+      refreshToken:
+        type: string
+      role:
+        $ref: '#/definitions/response.Role'
+    type: object
+  response.ForgotPasswordResponseDto:
+    properties:
+      message:
+        type: string
+    type: object
+  response.ResetPasswordResponseDto:
+    properties:
+      message:
         type: string
     type: object
   response.Role:
@@ -157,6 +227,75 @@ paths:
       summary: Welcome message
       tags:
       - welcome
+  /change-password:
+    post:
+      consumes:
+      - application/json
+      description: Change the authenticated user's password
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Change password information
+        in: body
+        name: changePasswordInfo
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangePasswordRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ChangePasswordResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Change user's password
+      tags:
+      - users
+  /forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send a password reset email to the user
+      parameters:
+      - description: User's email
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/request.ForgotPasswordRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ForgotPasswordResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Initiate password reset
+      tags:
+      - users
   /login:
     post:
       consumes:
@@ -215,6 +354,36 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Register a new user
+      tags:
+      - users
+  /reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset the user's password using the provided token
+      parameters:
+      - description: Reset password information
+        in: body
+        name: resetInfo
+        required: true
+        schema:
+          $ref: '#/definitions/request.ResetPasswordRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResetPasswordResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Reset user's password
       tags:
       - users
 swagger: "2.0"

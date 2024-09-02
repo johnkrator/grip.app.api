@@ -10,19 +10,34 @@ import (
 	"grip.app.api/utils"
 )
 
-func SetupRoutes(r *gin.Engine, userController *controller.UserController, userService user_service.IUserService) {
-	// Initialize UserHandler
-	userHandler := handlers.NewUserHandler(userService)
+const (
+	apiV1 = "/api/v1"
+)
 
-	// Swagger route should be before other routes and error handlers
+func SetupRoutes(r *gin.Engine, userController *controller.UserController, userService user_service.IUserService) {
+	//	// Initialize UserHandler
+	verifyUserEmailHandler := handlers.NewUserHandler(userService)
+
+	// Swagger route
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Apply ErrorHandler middleware to the group of routes
-	api := r.Group("/")
-	api.Use(utils.ErrorHandler())
+	// API v1 routes
+	v1 := r.Group(apiV1)
+	v1.Use(utils.ErrorHandler())
 	{
-		api.POST("/register", userController.Register)
-		api.POST("/login", userController.Login)
-		api.POST("/verify-email", userHandler.VerifyEmail)
+		// Public routes
+		v1.POST("/register", userController.Register)
+		v1.POST("/login", userController.Login)
+		v1.POST("/verify-email", verifyUserEmailHandler.VerifyEmail)
+		v1.POST("/forgot-password", userController.ForgotPassword)
+		v1.POST("/reset-password", userController.ResetPassword)
+
+		// Protected routes
+		authorized := v1.Group("/")
+		authorized.Use(handlers.AuthMiddleware())
+		{
+			authorized.POST("/change-password", userController.ChangePassword)
+			// ... other protected routes ...
+		}
 	}
 }

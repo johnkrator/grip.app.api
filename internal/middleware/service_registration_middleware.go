@@ -9,7 +9,7 @@ import (
 	"grip.app.api/internal/repository/account_repo"
 	"grip.app.api/internal/repository/user_profile_repo"
 	"grip.app.api/internal/repository/user_repo"
-	interface_implementations2 "grip.app.api/internal/service/user_service"
+	"grip.app.api/internal/service/user_service"
 )
 
 func Run() error {
@@ -24,12 +24,12 @@ func Run() error {
 	userProfileRepo := user_profile_repo.NewUserProfileRepository(db)
 	accountRepo := account_repo.NewAccountRepository(db)
 
-	newUserService := interface_implementations2.NewUserService(userRepo, userProfileRepo, accountRepo)
+	newUserService := user_service.NewUserService(userRepo, userProfileRepo, accountRepo)
 	userController := controller.NewUserController(newUserService)
 
 	r := gin.Default()
 	gin.SetMode(gin.DebugMode)
-	api.SetupRoutes(r, userController)
+	api.SetupRoutes(r, userController, newUserService)
 
 	return r.Run(":8080")
 }

@@ -8,4 +8,5 @@ import (
 type IUserService interface {
 	CreateUser(req *request.UserRegistrationRequestDto) (*response.UserRegistrationResponseDto, error)
 	LoginUser(req *request.UserLoginRequestDto) (*response.UserLoginResponseDto, error)
+	VerifyEmail(email, token string) error
 }

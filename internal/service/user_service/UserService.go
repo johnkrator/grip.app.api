@@ -281,30 +281,15 @@ func generateTokens(user *models.User) (string, string, error) {
 }
 
 func (s *UserService) generateToken(userID uuid.UUID) (string, error) {
-	token := fmt.Sprintf("%06d", rand.Intn(1000000))
-	expirationTime := time.Now().Add(15 * time.Minute)
+	token := fmt.Sprintf("%06d", rand.Intn(1000000))   // 6-digit random number
+	expirationTime := time.Now().Add(15 * time.Minute) // 15 minutes expiration
 
+	// Update user token with new token and expiration time in database table "users" and "user_tokens" tables
+	// respectively using the user ID as the primary key and the token as the unique identifier for each token pair
 	err := s.userRepo.UpdateUserToken(userID, token, expirationTime)
 	if err != nil {
 		return "", err
 	}
 
 	return token, nil
-}
-
-func (s *UserService) validateToken(userID uint, token string) (bool, error) {
-	user, err := s.userRepo.GetUserByID(userID)
-	if err != nil {
-		return false, err
-	}
-
-	if user.Token != token {
-		return false, nil
-	}
-
-	if time.Now().After(user.TokenExpiration) {
-		return false, nil
-	}
-
-	return true, nil
 }

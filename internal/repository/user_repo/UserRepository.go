@@ -63,3 +63,26 @@ func (r *UserRepository) GetUserByResetToken(token string) (*models.User, error)
 	}
 	return &user, nil
 }
+
+func (r *UserRepository) SoftDeleteUser(id uuid.UUID) error {
+	return r.db.Model(&models.User{}).Where("id = ?", id).Update("deleted_at", gorm.Expr("NOW()")).Error
+}
+
+func (r *UserRepository) GetAllUsers(page, pageSize int) ([]*models.User, int64, error) {
+	var users []*models.User
+	var totalCount int64
+
+	offset := (page - 1) * pageSize
+
+	err := r.db.Model(&models.User{}).Count(&totalCount).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.db.Offset(offset).Limit(pageSize).Find(&users).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, totalCount, nil
+}

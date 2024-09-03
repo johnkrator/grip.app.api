@@ -240,6 +240,25 @@ paths:
       summary: Change user's password
       tags:
       - users
+  /current-user:
+    get:
+      consumes:
+      - application/json
+      description: Get the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User
+          schema:
+            $ref: '#/definitions/response.UserLoginResponseDto'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get current user
+      tags:
+      - users
   /forgot-password:
     post:
       consumes:
@@ -358,6 +377,103 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Reset user's password
+      tags:
+      - users
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Users
+          schema:
+            $ref: '#/definitions/response.UserLoginResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get all users
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Delete user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Get a user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "2":
+          description: User
+          schema:
+            $ref: '#/definitions/response.UserLoginResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get user
       tags:
       - users
 swagger: "2.0"

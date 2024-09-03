@@ -7,6 +7,7 @@ import (
 	"grip.app.api/internal/service/user_service"
 	"grip.app.api/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -175,4 +176,121 @@ func (c *UserController) ResetPassword(ctx *gin.Context) {
 // @Router / [get]
 func (c *UserController) Welcome(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Welcome to the Grip API"})
+}
+
+// GetCurrentUser godoc
+// @Summary Get current user
+// @Description Get the current user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.UserLoginResponseDto "User"
+// @Failure 401 {object} gin.H
+// @Router /current-user [get]
+func (c *UserController) GetCurrentUser(ctx *gin.Context) {
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	uid, ok := userID.(uuid.UUID)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	user, err := c.userService.GetCurrentUser(uid)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+// DeleteUser godoc
+// @Summary Delete user
+// @Description Delete the user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} gin.H "User deleted successfully"
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /users/{id} [delete]
+func (c *UserController) DeleteUser(ctx *gin.Context) {
+	userID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	err = c.userService.DeleteUser(userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+
+// GetUser godoc
+// @Summary Get user
+// @Description Get a user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 2 {object} response.UserLoginResponseDto "User"
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /users/{id} [get]
+func (c *UserController) GetUser(ctx *gin.Context) {
+	userID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	user, err := c.userService.GetUser(userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+// GetAllUsers godoc
+// @Summary Get all users
+// @Description Get all users
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} response.UserLoginResponseDto "Users"
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /users [get]
+func (c *UserController) GetAllUsers(ctx *gin.Context) {
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("page_size", "10"))
+
+	users, totalCount, err := c.userService.GetAllUsers(page, pageSize)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"users":       users,
+		"total_count": totalCount,
+		"page":        page,
+		"page_size":   pageSize,
+	})
 }

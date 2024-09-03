@@ -311,6 +311,58 @@ func (s *UserService) ResetPassword(req *request.ResetPasswordRequestDto) error 
 	return nil
 }
 
+func (s *UserService) GetCurrentUser(userID uuid.UUID) (*response.UserLoginResponseDto, error) {
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return mapUserToResponseDto(user), nil
+}
+
+func (s *UserService) DeleteUser(userID uuid.UUID) error {
+	return s.userRepo.SoftDeleteUser(userID)
+}
+
+func (s *UserService) GetUser(userID uuid.UUID) (*response.UserLoginResponseDto, error) {
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return mapUserToResponseDto(user), nil
+}
+
+func (s *UserService) GetAllUsers(page, pageSize int) ([]*response.UserLoginResponseDto, int64, error) {
+	users, totalCount, err := s.userRepo.GetAllUsers(page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	userDtos := make([]*response.UserLoginResponseDto, len(users))
+	for i, user := range users {
+		userDtos[i] = mapUserToResponseDto(user)
+	}
+
+	return userDtos, totalCount, nil
+}
+
+func mapUserToResponseDto(user *models.User) *response.UserLoginResponseDto {
+	return &response.UserLoginResponseDto{
+		ID:           user.ID,
+		Email:        user.Email,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		Role:         response.Role(user.Role),
+		IsVerified:   user.IsVerified,
+		IsAdmin:      user.IsAdmin,
+		IsDeleted:    user.IsDeleted,
+		PhoneNumber:  user.PhoneNumber,
+		DateOfBirth:  user.DateOfBirth,
+		Address:      user.Address,
+		AccessToken:  user.AccessToken,
+		RefreshToken: user.RefreshToken,
+	}
+}
+
 func generateAccountNumber() string {
 	// Create a new random number generator with a seed based on the current time
 	source := rand.NewSource(time.Now().UnixNano())

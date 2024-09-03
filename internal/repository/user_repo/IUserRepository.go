@@ -16,4 +16,6 @@ type IUserRepository interface {
 	GetUserByID(id uuid.UUID) (*models.User, error)
 	UpdateUserToken(userID uuid.UUID, token string, expiration time.Time) error
 	GetUserByResetToken(token string) (*models.User, error)
+	SoftDeleteUser(id uuid.UUID) error
+	GetAllUsers(page, pageSize int) ([]*models.User, int64, error)
 }

@@ -37,6 +37,12 @@ func SetupRoutes(r *gin.Engine, userController *controller.UserController, userS
 		authorized.Use(handlers.AuthMiddleware())
 		{
 			authorized.POST("/change-password", userController.ChangePassword)
+
+			// New protected routes
+			authorized.GET("/users/me", userController.GetCurrentUser)
+			authorized.GET("/users/:id", userController.GetUser)
+			authorized.DELETE("/users/:id", userController.DeleteUser)
+			authorized.GET("/users", userController.GetAllUsers)
 			// ... other protected routes ...
 		}
 	}

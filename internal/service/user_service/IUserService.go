@@ -13,4 +13,8 @@ type IUserService interface {
 	ForgotPassword(email string) error
 	ResetPassword(req *request.ResetPasswordRequestDto) error
 	ChangePassword(userID uuid.UUID, req *request.ChangePasswordRequestDto) error
+	GetCurrentUser(userID uuid.UUID) (*response.UserLoginResponseDto, error)
+	DeleteUser(userID uuid.UUID) error
+	GetUser(userID uuid.UUID) (*response.UserLoginResponseDto, error)
+	GetAllUsers(page, pageSize int) ([]*response.UserLoginResponseDto, int64, error)
 }

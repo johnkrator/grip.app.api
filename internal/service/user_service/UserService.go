@@ -26,11 +26,7 @@ type UserService struct {
 	accountRepo     account_repo.IAccountRepository
 }
 
-func NewUserService(
-	userRepo user_repo.IUserRepository,
-	userProfileRepo user_profile_repo.IUserProfileRepository,
-	accountRepo account_repo.IAccountRepository,
-) *UserService {
+func NewUserService(userRepo user_repo.IUserRepository, userProfileRepo user_profile_repo.IUserProfileRepository, accountRepo account_repo.IAccountRepository) *UserService {
 	return &UserService{
 		userRepo:        userRepo,
 		userProfileRepo: userProfileRepo,
@@ -229,7 +225,7 @@ func (s *UserService) VerifyEmail(email, token string) error {
 	return nil
 }
 
-func (s *UserService) ChangePassword(userID uint, req *request.ChangePasswordRequestDto) error {
+func (s *UserService) ChangePassword(userID uuid.UUID, req *request.ChangePasswordRequestDto) error {
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
 		return utils.ErrUserNotFound

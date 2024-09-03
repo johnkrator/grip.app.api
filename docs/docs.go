@@ -73,7 +73,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.ChangePasswordResponse"
+                            "$ref": "#/definitions/response.ChangePasswordResponseDto"
                         }
                     },
                     "400": {
@@ -412,50 +412,11 @@ const docTemplate = `{
                 }
             }
         },
-        "response.ChangePasswordResponse": {
+        "response.ChangePasswordResponseDto": {
             "type": "object",
             "properties": {
-                "accessToken": {
-                    "type": "string"
-                },
-                "address": {
-                    "type": "string"
-                },
-                "dateOfBirth": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "firstName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isAdmin": {
-                    "type": "boolean"
-                },
-                "isDeleted": {
-                    "type": "boolean"
-                },
-                "isVerified": {
-                    "type": "boolean"
-                },
-                "lastName": {
-                    "type": "string"
-                },
                 "message": {
                     "type": "string"
-                },
-                "phoneNumber": {
-                    "type": "string"
-                },
-                "refreshToken": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/response.Role"
                 }
             }
         },

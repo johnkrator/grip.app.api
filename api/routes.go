@@ -14,8 +14,8 @@ const (
 	apiV1 = "/api/v1"
 )
 
-func SetupRoutes(r *gin.Engine, userController *controller.UserController, userService user_service.IUserService) {
-	//	// Initialize UserHandler
+func SetupRoutes(r *gin.Engine, userController *controller.UserController, userService *user_service.UserService) {
+	// Initialize UserHandler
 	verifyUserEmailHandler := handlers.NewUserHandler(userService)
 
 	// Swagger route

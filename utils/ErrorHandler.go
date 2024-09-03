@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"runtime/debug"
 )
 
 func ErrorHandler() gin.HandlerFunc {
@@ -11,6 +12,7 @@ func ErrorHandler() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				ErrorLogger.Printf("Panic occurred: %v", err)
+				ErrorLogger.Printf("Stack trace: %s", debug.Stack())
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 				c.Abort()
 			}

@@ -89,36 +89,10 @@ definitions:
       status:
         type: string
     type: object
-  response.ChangePasswordResponse:
+  response.ChangePasswordResponseDto:
     properties:
-      accessToken:
-        type: string
-      address:
-        type: string
-      dateOfBirth:
-        type: string
-      email:
-        type: string
-      firstName:
-        type: string
-      id:
-        type: string
-      isAdmin:
-        type: boolean
-      isDeleted:
-        type: boolean
-      isVerified:
-        type: boolean
-      lastName:
-        type: string
       message:
         type: string
-      phoneNumber:
-        type: string
-      refreshToken:
-        type: string
-      role:
-        $ref: '#/definitions/response.Role'
     type: object
   response.ForgotPasswordResponseDto:
     properties:
@@ -250,7 +224,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.ChangePasswordResponse'
+            $ref: '#/definitions/response.ChangePasswordResponseDto'
         "400":
           description: Bad Request
           schema:

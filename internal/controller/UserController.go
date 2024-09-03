@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/google/uuid"
 	"grip.app.api/internal/dtos/request"
 	"grip.app.api/internal/dtos/response"
 	"grip.app.api/internal/service/user_service"
@@ -14,7 +15,7 @@ type UserController struct {
 	userService user_service.IUserService
 }
 
-func NewUserController(userService user_service.IUserService) *UserController {
+func NewUserController(userService *user_service.UserService) *UserController {
 	return &UserController{userService: userService}
 }
 
@@ -80,7 +81,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 // @Produce json
 // @Param Authorization header string true "Bearer token"
 // @Param changePasswordInfo body request.ChangePasswordRequestDto true "Change password information"
-// @Success 200 {object} response.MessageResponseDto
+// @Success 200 {object} response.ChangePasswordResponseDto
 // @Failure 400 {object} gin.H
 // @Failure 401 {object} gin.H
 // @Failure 500 {object} gin.H
@@ -98,7 +99,7 @@ func (c *UserController) ChangePassword(ctx *gin.Context) {
 		return
 	}
 
-	err := c.userService.ChangePassword(userID.(uint), &req)
+	err := c.userService.ChangePassword(userID.(uuid.UUID), &req)
 	if err != nil {
 		if err == utils.ErrInvalidCredentials {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid current password"})
@@ -108,7 +109,7 @@ func (c *UserController) ChangePassword(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response.ChangePasswordResponse{Message: "Password changed successfully"})
+	ctx.JSON(http.StatusOK, response.ChangePasswordResponseDto{Message: "Password changed successfully"})
 }
 
 // ForgotPassword godoc

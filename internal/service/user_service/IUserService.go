@@ -1,6 +1,7 @@
 package user_service
 
 import (
+	"github.com/google/uuid"
 	"grip.app.api/internal/dtos/request"
 	"grip.app.api/internal/dtos/response"
 )
@@ -11,5 +12,5 @@ type IUserService interface {
 	VerifyEmail(email, token string) error
 	ForgotPassword(email string) error
 	ResetPassword(req *request.ResetPasswordRequestDto) error
-	ChangePassword(userID uint, req *request.ChangePasswordRequestDto) error
+	ChangePassword(userID uuid.UUID, req *request.ChangePasswordRequestDto) error
 }

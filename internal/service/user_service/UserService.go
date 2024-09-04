@@ -3,7 +3,6 @@ package user_service
 import (
 	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/shopspring/decimal"
@@ -40,6 +39,11 @@ func (s *UserService) CreateUser(req *request.UserRegistrationRequestDto) (*resp
 	if existingUser != nil {
 		utils.ErrorLogger.Printf("Attempt to create user with existing email: %s", req.Email)
 		return nil, utils.ErrEmailAlreadyExists
+	}
+
+	// Validate password
+	if err := utils.ValidatePassword(req.Password); err != nil {
+		return nil, err
 	}
 
 	tx := s.userRepo.BeginTransaction()
@@ -86,7 +90,7 @@ func (s *UserService) CreateUser(req *request.UserRegistrationRequestDto) (*resp
 	account := &models.Account{
 		UserID:        user.ID,
 		AccountType:   models.SavingsAccount,
-		AccountNumber: generateAccountNumber(),
+		AccountNumber: utils.GenerateAccountNumber(),
 		Balance:       decimal.NewFromFloat(0),
 		Currency:      models.USD,
 		Status:        models.Active,
@@ -163,7 +167,7 @@ func (s *UserService) LoginUser(req *request.UserLoginRequestDto) (*response.Use
 		return nil, utils.ErrInvalidCredentials
 	}
 
-	accessToken, refreshToken, err := generateTokens(user)
+	accessToken, refreshToken, err := utils.GenerateTokens(user)
 	if err != nil {
 		utils.ErrorLogger.Printf("Failed to generate tokens: %v", err)
 		return nil, err
@@ -258,6 +262,15 @@ func (s *UserService) UpdateUser(userID uuid.UUID, req *request.UpdateUserReques
 	}
 	if req.Address != "" {
 		updates["address"] = req.Address
+	}
+	if req.Email != "" {
+		// Check if the new email already exists
+		existingUser, _ := s.userRepo.GetUserByEmail(req.Email)
+		if existingUser != nil && existingUser.ID != userID {
+			tx.Rollback()
+			return nil, errors.New("email already in use")
+		}
+		updates["email"] = req.Email
 	}
 
 	// Update the user in the database
@@ -467,18 +480,6 @@ func mapUserToResponseDto(user *models.User) *response.UserLoginResponseDto {
 	}
 }
 
-func generateAccountNumber() string {
-	// Create a new random number generator with a seed based on the current time
-	source := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(source)
-
-	// Generate a random number for the last 7 digits
-	lastSevenDigits := r.Intn(10000000) // 7-digit number from 0000000 to 9999999
-
-	// Combine the fixed "077" prefix with the random 7-digit number
-	return fmt.Sprintf("001%07d", lastSevenDigits)
-}
-
 func init() {
 	// Load the .env file
 	if err := godotenv.Load(); err != nil {
@@ -486,38 +487,7 @@ func init() {
 	}
 }
 
-func generateTokens(user *models.User) (string, string, error) {
-	// Access token claims
-	accessClaims := jwt.MapClaims{
-		"user_id": user.ID,
-		"email":   user.Email,
-		"role":    user.Role,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(), // 24 hour expiration
-	}
-
-	// Refresh token claims
-	refreshClaims := jwt.MapClaims{
-		"user_id": user.ID,
-		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 day expiration
-	}
-
-	// Create the access token
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessTokenString, err := accessToken.SignedString([]byte(os.Getenv("ACCESS_TOKEN_SECRET")))
-	if err != nil {
-		return "", "", err
-	}
-
-	// Create the refresh token
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshTokenString, err := refreshToken.SignedString([]byte(os.Getenv("REFRESH_TOKEN_SECRET")))
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessTokenString, refreshTokenString, nil
-}
-
+// GenerateToken generates a random token for the user
 func (s *UserService) generateToken(userID uuid.UUID) (string, error) {
 	token := fmt.Sprintf("%06d", rand.Intn(1000000))   // 6-digit random number
 	expirationTime := time.Now().Add(15 * time.Minute) // 15 minutes expiration

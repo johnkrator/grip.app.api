@@ -408,6 +408,69 @@ const docTemplate = `{
                     }
                 }
             },
+            "put": {
+                "description": "Update the authenticated user's information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update user information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Update user information",
+                        "name": "updateInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateUserRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.UserResponseDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete the user",
                 "consumes": [
@@ -503,6 +566,46 @@ const docTemplate = `{
                 },
                 "token": {
                     "type": "string"
+                }
+            }
+        },
+        "request.UpdateUserProfileRequestDto": {
+            "type": "object",
+            "properties": {
+                "incomeRange": {
+                    "type": "string"
+                },
+                "occupation": {
+                    "type": "string"
+                },
+                "preferences": {
+                    "type": "string"
+                },
+                "riskTolerance": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UpdateUserRequestDto": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "dateOfBirth": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "phoneNumber": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/request.UpdateUserProfileRequestDto"
                 }
             }
         },
@@ -708,6 +811,41 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "phoneNumber": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/response.UserProfileResponseDto"
+                },
+                "role": {
+                    "$ref": "#/definitions/response.Role"
+                }
+            }
+        },
+        "response.UserResponseDto": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "dateOfBirth": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isVerified": {
+                    "type": "boolean"
                 },
                 "lastName": {
                     "type": "string"

@@ -43,6 +43,7 @@ func SetupRoutes(r *gin.Engine, userController *controller.UserController, userS
 			authorized.GET("/users/:id", userController.GetUser)
 			authorized.DELETE("/users/:id", userController.DeleteUser)
 			authorized.GET("/users", userController.GetAllUsers)
+			authorized.PUT("/users/:id", userController.UpdateUser)
 			// ... other protected routes ...
 		}
 	}

@@ -225,6 +225,110 @@ func (s *UserService) VerifyEmail(email, token string) error {
 	return nil
 }
 
+func (s *UserService) UpdateUser(userID uuid.UUID, req *request.UpdateUserRequestDto) (*response.UserResponseDto, error) {
+	// Start a transaction
+	tx := s.userRepo.BeginTransaction()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Get the existing user
+	existingUser, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		tx.Rollback()
+		utils.ErrorLogger.Printf("Failed to get user with ID %s: %v", userID, err)
+		return nil, errors.New("user not found")
+	}
+
+	// Update user fields if provided in the request
+	updates := make(map[string]interface{})
+	if req.FirstName != "" {
+		updates["first_name"] = req.FirstName
+	}
+	if req.LastName != "" {
+		updates["last_name"] = req.LastName
+	}
+	if req.PhoneNumber != "" {
+		updates["phone_number"] = req.PhoneNumber
+	}
+	if !req.DateOfBirth.IsZero() {
+		updates["date_of_birth"] = req.DateOfBirth
+	}
+	if req.Address != "" {
+		updates["address"] = req.Address
+	}
+
+	// Update the user in the database
+	if len(updates) > 0 {
+		err = tx.Model(existingUser).Updates(updates).Error
+		if err != nil {
+			tx.Rollback()
+			utils.ErrorLogger.Printf("Failed to update user with ID %s: %v", userID, err)
+			return nil, errors.New("failed to update user")
+		}
+	}
+
+	// Handle profile update
+	userProfile, err := s.userProfileRepo.GetUserProfileByUserID(userID)
+	if err != nil {
+		tx.Rollback()
+		utils.ErrorLogger.Printf("Failed to get user profile for user ID %s: %v", userID, err)
+		return nil, errors.New("failed to get user profile")
+	}
+
+	profileUpdates := make(map[string]interface{})
+	if req.Occupation != "" {
+		profileUpdates["occupation"] = req.Occupation
+	}
+	if req.IncomeRange != "" {
+		profileUpdates["income_range"] = models.IncomeRange(req.IncomeRange)
+	}
+	if req.RiskTolerance != "" {
+		profileUpdates["risk_tolerance"] = req.RiskTolerance
+	}
+	if req.Preferences != "" {
+		profileUpdates["preferences"] = req.Preferences
+	}
+
+	if len(profileUpdates) > 0 {
+		err = tx.Model(userProfile).Updates(profileUpdates).Error
+		if err != nil {
+			tx.Rollback()
+			utils.ErrorLogger.Printf("Failed to update user profile for user ID %s: %v", userID, err)
+			return nil, errors.New("failed to update user profile")
+		}
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		utils.ErrorLogger.Printf("Failed to commit transaction: %v", err)
+		return nil, errors.New("failed to update user and profile")
+	}
+
+	// Prepare the update_user_response
+	update_user_response := &response.UserResponseDto{
+		ID:          existingUser.ID,
+		FirstName:   existingUser.FirstName,
+		LastName:    existingUser.LastName,
+		Email:       existingUser.Email,
+		PhoneNumber: existingUser.PhoneNumber,
+		DateOfBirth: existingUser.DateOfBirth,
+		Address:     existingUser.Address,
+		Role:        response.Role(existingUser.Role),
+		IsVerified:  existingUser.IsVerified,
+		Profile: &response.UserProfileResponseDto{
+			Occupation:    userProfile.Occupation,
+			IncomeRange:   string(userProfile.IncomeRange),
+			RiskTolerance: userProfile.RiskTolerance,
+			Preferences:   userProfile.Preferences,
+		},
+	}
+
+	return update_user_response, nil
+}
+
 func (s *UserService) ChangePassword(userID uuid.UUID, req *request.ChangePasswordRequestDto) error {
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {

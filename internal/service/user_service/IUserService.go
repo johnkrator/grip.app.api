@@ -17,4 +17,5 @@ type IUserService interface {
 	DeleteUser(userID uuid.UUID) error
 	GetUser(userID uuid.UUID) (*response.UserLoginResponseDto, error)
 	GetAllUsers(page, pageSize int) ([]*response.UserLoginResponseDto, int64, error)
+	UpdateUser(userID uuid.UUID, req *request.UpdateUserRequestDto) (*response.UserResponseDto, error)
 }

@@ -294,3 +294,46 @@ func (c *UserController) GetAllUsers(ctx *gin.Context) {
 		"page_size":   pageSize,
 	})
 }
+
+// UpdateUser godoc
+// @Summary Update user information
+// @Description Update the authenticated user's information
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param updateInfo body request.UpdateUserRequestDto true "Update user information"
+// @Success 200 {object} response.UserResponseDto
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /users/{id} [put]
+func (c *UserController) UpdateUser(ctx *gin.Context) {
+	var req request.UpdateUserRequestDto
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	updatedUser, err := c.userService.UpdateUser(userID, &req)
+	if err != nil {
+		switch err.Error() {
+		case "user not found":
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		case "failed to update user", "failed to get user profile", "failed to update user profile":
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "An unexpected error occurred"})
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, updatedUser)
+}

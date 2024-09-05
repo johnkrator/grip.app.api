@@ -569,23 +569,6 @@ const docTemplate = `{
                 }
             }
         },
-        "request.UpdateUserProfileRequestDto": {
-            "type": "object",
-            "properties": {
-                "incomeRange": {
-                    "type": "string"
-                },
-                "occupation": {
-                    "type": "string"
-                },
-                "preferences": {
-                    "type": "string"
-                },
-                "riskTolerance": {
-                    "type": "string"
-                }
-            }
-        },
         "request.UpdateUserRequestDto": {
             "type": "object",
             "properties": {
@@ -595,17 +578,29 @@ const docTemplate = `{
                 "dateOfBirth": {
                     "type": "string"
                 },
+                "email": {
+                    "type": "string"
+                },
                 "firstName": {
+                    "type": "string"
+                },
+                "incomeRange": {
                     "type": "string"
                 },
                 "lastName": {
                     "type": "string"
                 },
+                "occupation": {
+                    "type": "string"
+                },
                 "phoneNumber": {
                     "type": "string"
                 },
-                "profile": {
-                    "$ref": "#/definitions/request.UpdateUserProfileRequestDto"
+                "preferences": {
+                    "type": "string"
+                },
+                "riskTolerance": {
+                    "type": "string"
                 }
             }
         },

@@ -32,31 +32,28 @@ definitions:
     - new_password
     - token
     type: object
-  request.UpdateUserProfileRequestDto:
-    properties:
-      incomeRange:
-        type: string
-      occupation:
-        type: string
-      preferences:
-        type: string
-      riskTolerance:
-        type: string
-    type: object
   request.UpdateUserRequestDto:
     properties:
       address:
         type: string
       dateOfBirth:
         type: string
+      email:
+        type: string
       firstName:
+        type: string
+      incomeRange:
         type: string
       lastName:
         type: string
+      occupation:
+        type: string
       phoneNumber:
         type: string
-      profile:
-        $ref: '#/definitions/request.UpdateUserProfileRequestDto'
+      preferences:
+        type: string
+      riskTolerance:
+        type: string
     type: object
   request.UserLoginRequestDto:
     properties:

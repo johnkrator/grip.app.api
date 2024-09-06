@@ -2,25 +2,30 @@ package transaction_service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"grip.app.api/internal/dtos/request"
 	"grip.app.api/internal/dtos/response"
+	email_send_config2 "grip.app.api/internal/middleware/email_send_config"
 	"grip.app.api/internal/models"
 	"grip.app.api/internal/repository/account_repo"
 	"grip.app.api/internal/repository/transaction_repo"
+	"grip.app.api/internal/repository/user_repo"
 	"time"
 )
 
 type TransactionService struct {
 	transactionRepo transaction_repo.ITransactionRepository
 	accountRepo     account_repo.IAccountRepository
+	userRepo        user_repo.IUserRepository
 }
 
-func NewTransactionService(transactionRepo transaction_repo.ITransactionRepository, accountRepo account_repo.IAccountRepository) *TransactionService {
+func NewTransactionService(transactionRepo transaction_repo.ITransactionRepository, accountRepo account_repo.IAccountRepository, userRepo user_repo.IUserRepository) *TransactionService {
 	return &TransactionService{
 		transactionRepo: transactionRepo,
 		accountRepo:     accountRepo,
+		userRepo:        userRepo,
 	}
 }
 
@@ -61,6 +66,27 @@ func (s *TransactionService) Deposit(req request.DepositRequest) (*response.Tran
 	err = s.transactionRepo.Create(transaction)
 	if err != nil {
 		return nil, err
+	}
+
+	// Send email notification
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = email_send_config2.SendTransactionEmail(
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		account.AccountNumber,
+		email_send_config2.Deposit,
+		amount,
+		req.Currency,
+		req.Description,
+	)
+	if err != nil {
+		// Log the error, but don't return it as the deposit was successful
+		fmt.Printf("Failed to send deposit confirmation email: %v\n", err)
 	}
 
 	return toTransactionResponseDto(transaction), nil
@@ -107,6 +133,27 @@ func (s *TransactionService) Withdraw(req request.WithdrawRequest) (*response.Tr
 	err = s.transactionRepo.Create(transaction)
 	if err != nil {
 		return nil, err
+	}
+
+	// Send email notification
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = email_send_config2.SendTransactionEmail(
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		account.AccountNumber,
+		email_send_config2.Withdrawal,
+		amount.Neg(),
+		req.Currency,
+		req.Description,
+	)
+	if err != nil {
+		// Log the error, but don't return it as the withdrawal was successful
+		fmt.Printf("Failed to send withdrawal confirmation email: %v\n", err)
 	}
 
 	return toTransactionResponseDto(transaction), nil
@@ -190,6 +237,26 @@ func (s *TransactionService) Transfer(req request.TransferRequest) (*request.Tra
 		return nil, err
 	}
 
+	// Send email notifications
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = email_send_config2.SendTransactionEmail(
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		fromAccount.AccountNumber,
+		email_send_config2.Transfer,
+		amount.Neg(),
+		req.Currency,
+		req.Description,
+	)
+	if err != nil {
+		fmt.Printf("Failed to send transfer confirmation email to sender: %v\n", err)
+	}
+
 	return &request.TransferResponse{
 		FromTransaction: *fromTransaction,
 		ToTransaction:   *toTransaction,
@@ -229,13 +296,66 @@ func (s *TransactionService) ChargeFee(userID, accountID uuid.UUID, amount decim
 		return nil, err
 	}
 
+	// Send email notification
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = email_send_config2.SendTransactionEmail(
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		account.AccountNumber,
+		email_send_config2.FeeCharged,
+		amount.Neg(),
+		currency,
+		description,
+	)
+	if err != nil {
+		// Log the error, but don't return it as the fee charge was successful
+		fmt.Printf("Failed to send fee charge notification email: %v\n", err)
+	}
+
 	return toTransactionResponseDto(transaction), nil
 }
 
 func (s *TransactionService) SendPayment(req request.TransferRequest) (*request.TransferResponse, error) {
 	// For now, we'll implement SendPayment as identical to Transfer
 	// In a real-world scenario, you might want to add additional logic specific to payments
-	return s.Transfer(req)
+	transferResponse, err := s.Transfer(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send additional email notification for payment
+	userID, _ := uuid.Parse(req.UserID)
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	fromAccountID, _ := uuid.Parse(req.FromAccountID)
+	fromAccount, err := s.accountRepo.GetByID(fromAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = email_send_config2.SendTransactionEmail(
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		fromAccount.AccountNumber,
+		email_send_config2.Transfer, // You might want to create a new type for Payment in the email config
+		decimal.NewFromFloat(req.Amount).Neg(),
+		req.Currency,
+		"Payment: "+req.Description,
+	)
+	if err != nil {
+		fmt.Printf("Failed to send payment confirmation email: %v\n", err)
+	}
+
+	return transferResponse, nil
 }
 
 func toTransactionResponseDto(t *models.Transaction) *response.TransactionResponseDto {

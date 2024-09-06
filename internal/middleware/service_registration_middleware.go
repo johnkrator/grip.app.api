@@ -32,7 +32,7 @@ func Run() error {
 
 	newUserService := user_service.NewUserService(userRepo, userProfileRepo, accountRepo)
 	financialOverviewService := financial_overview_service.NewFinancialOverviewService(financialOverviewRepo)
-	transactionService := transaction_service.NewTransactionService(transactionRepo, accountRepo)
+	transactionService := transaction_service.NewTransactionService(transactionRepo, accountRepo, userRepo)
 
 	userController := controller.NewUserController(newUserService)
 	financialOverviewController := controller.NewFinancialOverviewController(financialOverviewService)

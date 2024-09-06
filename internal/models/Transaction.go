@@ -8,11 +8,22 @@ import (
 	"grip.app.api/internal/models/base"
 )
 
+type TransactionType string
+
+const (
+	Deposit         TransactionType = "DEPOSIT"
+	Withdrawal      TransactionType = "WITHDRAWAL"
+	Transfer        TransactionType = "TRANSFER"
+	PaymentSent     TransactionType = "PAYMENT_SENT"
+	PaymentReceived TransactionType = "PAYMENT_RECEIVED"
+	FeeCharged      TransactionType = "FEE_CHARGED"
+)
+
 type Transaction struct {
 	base.BaseModel
 	AccountID   uuid.UUID
 	UserID      uuid.UUID
-	Type        string
+	Type        TransactionType
 	Amount      decimal.Decimal
 	Currency    string
 	Description string

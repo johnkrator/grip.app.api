@@ -107,8 +107,8 @@ func (s *UserService) CreateUser(req *request.UserRegistrationRequestDto) (*resp
 		return nil, err
 	}
 
-	// Generate 6-digit token
-	token, err := s.generateToken(user.ID)
+	// Generate 6-digit token for email verification
+	token, err := s.generateEmailVerificationToken(user.ID)
 	if err != nil {
 		utils.ErrorLogger.Printf("Failed to generate token: %v", err)
 		return nil, err
@@ -167,7 +167,7 @@ func (s *UserService) LoginUser(req *request.UserLoginRequestDto) (*response.Use
 		return nil, utils.ErrInvalidCredentials
 	}
 
-	accessToken, refreshToken, err := utils.GenerateTokens(user)
+	accessToken, refreshToken, err := utils.GenerateAuthTokens(user)
 	if err != nil {
 		utils.ErrorLogger.Printf("Failed to generate tokens: %v", err)
 		return nil, err
@@ -374,7 +374,7 @@ func (s *UserService) ForgotPassword(email string) error {
 	}
 
 	// Generate a reset token
-	resetToken, err := utils.GenerateRandomToken(32)
+	resetToken, err := utils.GenerateRandomResetToken(32)
 	if err != nil {
 		return err
 	}
@@ -433,7 +433,7 @@ func (s *UserService) GetCurrentUser(userID uuid.UUID) (*response.UserLoginRespo
 	if err != nil {
 		return nil, err
 	}
-	return mapUserToResponseDto(user), nil
+	return utils.MapUserToResponseDto(user), nil
 }
 
 func (s *UserService) DeleteUser(userID uuid.UUID) error {
@@ -445,7 +445,7 @@ func (s *UserService) GetUser(userID uuid.UUID) (*response.UserLoginResponseDto,
 	if err != nil {
 		return nil, err
 	}
-	return mapUserToResponseDto(user), nil
+	return utils.MapUserToResponseDto(user), nil
 }
 
 func (s *UserService) GetAllUsers(page, pageSize int) ([]*response.UserLoginResponseDto, int64, error) {
@@ -456,28 +456,10 @@ func (s *UserService) GetAllUsers(page, pageSize int) ([]*response.UserLoginResp
 
 	userDtos := make([]*response.UserLoginResponseDto, len(users))
 	for i, user := range users {
-		userDtos[i] = mapUserToResponseDto(user)
+		userDtos[i] = utils.MapUserToResponseDto(user)
 	}
 
 	return userDtos, totalCount, nil
-}
-
-func mapUserToResponseDto(user *models.User) *response.UserLoginResponseDto {
-	return &response.UserLoginResponseDto{
-		ID:           user.ID,
-		Email:        user.Email,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		Role:         response.Role(user.Role),
-		IsVerified:   user.IsVerified,
-		IsAdmin:      user.IsAdmin,
-		IsDeleted:    user.IsDeleted,
-		PhoneNumber:  user.PhoneNumber,
-		DateOfBirth:  user.DateOfBirth,
-		Address:      user.Address,
-		AccessToken:  user.AccessToken,
-		RefreshToken: user.RefreshToken,
-	}
 }
 
 func init() {
@@ -487,8 +469,7 @@ func init() {
 	}
 }
 
-// GenerateToken generates a random token for the user
-func (s *UserService) generateToken(userID uuid.UUID) (string, error) {
+func (s *UserService) generateEmailVerificationToken(userID uuid.UUID) (string, error) {
 	token := fmt.Sprintf("%06d", rand.Intn(1000000))   // 6-digit random number
 	expirationTime := time.Now().Add(15 * time.Minute) // 15 minutes expiration
 

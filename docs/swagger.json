@@ -513,6 +513,62 @@
                     }
                 }
             }
+        },
+        "/users/{id}/financial-overview": {
+            "get": {
+                "description": "Get the authenticated user's financial overview",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user financial overview",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.FinancialOverviewResponseDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -563,23 +619,6 @@
                 }
             }
         },
-        "request.UpdateUserProfileRequestDto": {
-            "type": "object",
-            "properties": {
-                "incomeRange": {
-                    "type": "string"
-                },
-                "occupation": {
-                    "type": "string"
-                },
-                "preferences": {
-                    "type": "string"
-                },
-                "riskTolerance": {
-                    "type": "string"
-                }
-            }
-        },
         "request.UpdateUserRequestDto": {
             "type": "object",
             "properties": {
@@ -589,17 +628,29 @@
                 "dateOfBirth": {
                     "type": "string"
                 },
+                "email": {
+                    "type": "string"
+                },
                 "firstName": {
+                    "type": "string"
+                },
+                "incomeRange": {
                     "type": "string"
                 },
                 "lastName": {
                     "type": "string"
                 },
+                "occupation": {
+                    "type": "string"
+                },
                 "phoneNumber": {
                     "type": "string"
                 },
-                "profile": {
-                    "$ref": "#/definitions/request.UpdateUserProfileRequestDto"
+                "preferences": {
+                    "type": "string"
+                },
+                "riskTolerance": {
+                    "type": "string"
                 }
             }
         },
@@ -693,10 +744,85 @@
                 }
             }
         },
+        "response.FinancialOverviewResponseDto": {
+            "type": "object",
+            "properties": {
+                "account": {
+                    "$ref": "#/definitions/response.AccountResponseDto"
+                },
+                "investments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.InvestmentResponseDto"
+                    }
+                },
+                "loans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.LoanResponseDto"
+                    }
+                },
+                "netWorth": {
+                    "type": "number"
+                },
+                "totalInvestmentValue": {
+                    "type": "number"
+                },
+                "totalLoanAmount": {
+                    "type": "number"
+                },
+                "user": {
+                    "$ref": "#/definitions/response.UserResponseDto"
+                }
+            }
+        },
         "response.ForgotPasswordResponseDto": {
             "type": "object",
             "properties": {
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.InvestmentResponseDto": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "currentValue": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.LoanResponseDto": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "interestRate": {
+                    "type": "number"
+                },
+                "purpose": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "term": {
                     "type": "string"
                 }
             }

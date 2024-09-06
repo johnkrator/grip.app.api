@@ -14,7 +14,7 @@ const (
 	apiV1 = "/api/v1"
 )
 
-func SetupRoutes(r *gin.Engine, userController *controller.UserController, userService *user_service.UserService) {
+func SetupRoutes(r *gin.Engine, userController *controller.UserController, userService *user_service.UserService, financialOverviewController *controller.FinancialOverviewController) {
 	// Initialize UserHandler
 	verifyUserEmailHandler := handlers.NewUserHandler(userService)
 
@@ -44,7 +44,9 @@ func SetupRoutes(r *gin.Engine, userController *controller.UserController, userS
 			authorized.DELETE("/users/:id", userController.DeleteUser)
 			authorized.GET("/users", userController.GetAllUsers)
 			authorized.PUT("/users/:id", userController.UpdateUser)
-			// ... other protected routes ...
+
+			// Financial overview routes
+			authorized.GET("/users/:id/financial-overview", financialOverviewController.GetUserFinancialOverview)
 		}
 	}
 }

@@ -7,8 +7,10 @@ import (
 	"grip.app.api/internal/controller"
 	"grip.app.api/internal/models"
 	"grip.app.api/internal/repository/account_repo"
+	"grip.app.api/internal/repository/financial_overview_repo"
 	"grip.app.api/internal/repository/user_profile_repo"
 	"grip.app.api/internal/repository/user_repo"
+	"grip.app.api/internal/service/financial_overview_service"
 	"grip.app.api/internal/service/user_service"
 )
 
@@ -23,13 +25,17 @@ func Run() error {
 	userRepo := user_repo.NewUserRepository(db)
 	userProfileRepo := user_profile_repo.NewUserProfileRepository(db)
 	accountRepo := account_repo.NewAccountRepository(db)
+	financialOverviewRepo := financial_overview_repo.NewFinancialOverviewRepository(db)
 
 	newUserService := user_service.NewUserService(userRepo, userProfileRepo, accountRepo)
+	financialOverviewService := financial_overview_service.NewFinancialOverviewService(financialOverviewRepo)
+
 	userController := controller.NewUserController(newUserService)
+	financialOverviewController := controller.NewFinancialOverviewController(financialOverviewService)
 
 	r := gin.Default()
 	gin.SetMode(gin.DebugMode)
-	api.SetupRoutes(r, userController, newUserService)
+	api.SetupRoutes(r, userController, newUserService, financialOverviewController)
 
 	return r.Run(":8080")
 }

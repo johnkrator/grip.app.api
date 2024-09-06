@@ -32,31 +32,28 @@ definitions:
     - new_password
     - token
     type: object
-  request.UpdateUserProfileRequestDto:
-    properties:
-      incomeRange:
-        type: string
-      occupation:
-        type: string
-      preferences:
-        type: string
-      riskTolerance:
-        type: string
-    type: object
   request.UpdateUserRequestDto:
     properties:
       address:
         type: string
       dateOfBirth:
         type: string
+      email:
+        type: string
       firstName:
+        type: string
+      incomeRange:
         type: string
       lastName:
         type: string
+      occupation:
+        type: string
       phoneNumber:
         type: string
-      profile:
-        $ref: '#/definitions/request.UpdateUserProfileRequestDto'
+      preferences:
+        type: string
+      riskTolerance:
+        type: string
     type: object
   request.UserLoginRequestDto:
     properties:
@@ -120,9 +117,58 @@ definitions:
       message:
         type: string
     type: object
+  response.FinancialOverviewResponseDto:
+    properties:
+      account:
+        $ref: '#/definitions/response.AccountResponseDto'
+      investments:
+        items:
+          $ref: '#/definitions/response.InvestmentResponseDto'
+        type: array
+      loans:
+        items:
+          $ref: '#/definitions/response.LoanResponseDto'
+        type: array
+      netWorth:
+        type: number
+      totalInvestmentValue:
+        type: number
+      totalLoanAmount:
+        type: number
+      user:
+        $ref: '#/definitions/response.UserResponseDto'
+    type: object
   response.ForgotPasswordResponseDto:
     properties:
       message:
+        type: string
+    type: object
+  response.InvestmentResponseDto:
+    properties:
+      amount:
+        type: number
+      currentValue:
+        type: number
+      id:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
+  response.LoanResponseDto:
+    properties:
+      amount:
+        type: number
+      id:
+        type: string
+      interestRate:
+        type: number
+      purpose:
+        type: string
+      status:
+        type: string
+      term:
         type: string
     type: object
   response.ResetPasswordResponseDto:
@@ -565,6 +611,43 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Update user information
+      tags:
+      - users
+  /users/{id}/financial-overview:
+    get:
+      consumes:
+      - application/json
+      description: Get the authenticated user's financial overview
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.FinancialOverviewResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get user financial overview
       tags:
       - users
 swagger: "2.0"

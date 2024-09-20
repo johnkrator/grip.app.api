@@ -12,6 +12,7 @@ import (
 	"grip.app.api/internal/repository/account_repo"
 	"grip.app.api/internal/repository/transaction_repo"
 	"grip.app.api/internal/repository/user_repo"
+	"grip.app.api/utils"
 	"time"
 )
 
@@ -32,23 +33,23 @@ func NewTransactionService(transactionRepo transaction_repo.ITransactionReposito
 func (s *TransactionService) Deposit(req request.DepositRequest) (*response.TransactionResponseDto, error) {
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrUserNotFound
 	}
 	accountID, err := uuid.Parse(req.AccountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 	amount := decimal.NewFromFloat(req.Amount)
 
 	account, err := s.accountRepo.GetByID(accountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	newBalance := account.Balance.Add(amount)
 	err = s.accountRepo.UpdateBalance(accountID, newBalance)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	transaction := &models.Transaction{
@@ -65,13 +66,13 @@ func (s *TransactionService) Deposit(req request.DepositRequest) (*response.Tran
 
 	err = s.transactionRepo.Create(transaction)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountCreationFailed
 	}
 
 	// Send email notification
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrUserNotFound
 	}
 
 	err = email_send_config2.SendTransactionEmail(
@@ -95,17 +96,17 @@ func (s *TransactionService) Deposit(req request.DepositRequest) (*response.Tran
 func (s *TransactionService) Withdraw(req request.WithdrawRequest) (*response.TransactionResponseDto, error) {
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrUserNotFound
 	}
 	accountID, err := uuid.Parse(req.AccountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 	amount := decimal.NewFromFloat(req.Amount)
 
 	account, err := s.accountRepo.GetByID(accountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	if account.Balance.LessThan(amount) {
@@ -115,7 +116,7 @@ func (s *TransactionService) Withdraw(req request.WithdrawRequest) (*response.Tr
 	newBalance := account.Balance.Sub(amount)
 	err = s.accountRepo.UpdateBalance(accountID, newBalance)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	transaction := &models.Transaction{
@@ -132,13 +133,13 @@ func (s *TransactionService) Withdraw(req request.WithdrawRequest) (*response.Tr
 
 	err = s.transactionRepo.Create(transaction)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	// Send email notification
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrUserNotFound
 	}
 
 	err = email_send_config2.SendTransactionEmail(
@@ -162,26 +163,26 @@ func (s *TransactionService) Withdraw(req request.WithdrawRequest) (*response.Tr
 func (s *TransactionService) Transfer(req request.TransferRequest) (*request.TransferResponse, error) {
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrUserNotFound
 	}
 	fromAccountID, err := uuid.Parse(req.FromAccountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 	toAccountID, err := uuid.Parse(req.ToAccountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 	amount := decimal.NewFromFloat(req.Amount)
 
 	fromAccount, err := s.accountRepo.GetByID(fromAccountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	toAccount, err := s.accountRepo.GetByID(toAccountID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	if fromAccount.Balance.LessThan(amount) {
@@ -193,14 +194,14 @@ func (s *TransactionService) Transfer(req request.TransferRequest) (*request.Tra
 
 	err = s.accountRepo.UpdateBalance(fromAccountID, newFromBalance)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	err = s.accountRepo.UpdateBalance(toAccountID, newToBalance)
 	if err != nil {
 		// Rollback the first update if the second fails
 		_ = s.accountRepo.UpdateBalance(fromAccountID, fromAccount.Balance)
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	fromTransaction := &models.Transaction{
@@ -229,18 +230,18 @@ func (s *TransactionService) Transfer(req request.TransferRequest) (*request.Tra
 
 	err = s.transactionRepo.Create(fromTransaction)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	err = s.transactionRepo.Create(toTransaction)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrAccountNotFound
 	}
 
 	// Send email notifications
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrUserNotFound
 	}
 
 	err = email_send_config2.SendTransactionEmail(
@@ -346,7 +347,7 @@ func (s *TransactionService) SendPayment(req request.TransferRequest) (*request.
 		user.FirstName,
 		user.LastName,
 		fromAccount.AccountNumber,
-		email_send_config2.Transfer, // You might want to create a new type for Payment in the email config
+		email_send_config2.Transfer,
 		decimal.NewFromFloat(req.Amount).Neg(),
 		req.Currency,
 		"Payment: "+req.Description,

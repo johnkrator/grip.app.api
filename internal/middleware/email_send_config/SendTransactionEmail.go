@@ -7,6 +7,7 @@ import (
 	"gopkg.in/mail.v2"
 	"os"
 	"strconv"
+	"time"
 )
 
 type TransactionType string
@@ -69,120 +70,132 @@ func SendTransactionEmail(toEmail, firstName, lastName, accountNumber string, tr
 
 func getEmailContent(firstName, lastName, accountNumber string, transactionType TransactionType, amount decimal.Decimal, currency, description string) (string, string) {
 	var subject, body string
+	fullName := fmt.Sprintf("%s %s", firstName, lastName)
+	currentTime := time.Now()
+	dateStr := currentTime.Format("Monday, January 02 2006")
+	timeStr := currentTime.Format("15:04:05")
+
+	// Function to get currency symbol
+	getCurrencySymbol := func(currency string) string {
+		switch currency {
+		case "NGN":
+			return "₦"
+		case "USD":
+			return "$"
+		case "EUR":
+			return "€"
+		case "GBP":
+			return "£"
+		default:
+			return currency
+		}
+	}
+
+	currencySymbol := getCurrencySymbol(currency)
 
 	switch transactionType {
 	case Registration:
 		subject = "Welcome to Grip Finance!"
-		body = fmt.Sprintf(`
-			Dear %s %s,
-			
-			Welcome to Grip Finance! We're thrilled to have you on board.
-			
-			Your registration was successful, and your account is now active. Here are your account details:
-			
-			Account Number: %s
-			
-			If you have any questions or need assistance, please don't hesitate to contact our support team.
-			
-			Best regards,
-			Team Grip Finance
-`, firstName, lastName, accountNumber)
+		body = fmt.Sprintf(`Dear %s,
+
+		Your registration with Grip Finance has been confirmed.
+		
+		Account Details:
+		Account Number: %s
+		
+		For further enquiries, please contact our customer support through the following channels:
+		Email: customerservice@gripfinance.com
+		Phone: 07001234567
+		
+		Thank you for choosing Grip Finance.`, fullName, accountNumber)
 
 	case Deposit:
 		subject = "Deposit Confirmation"
-		body = fmt.Sprintf(`
-			Dear %s %s,
-			
-			We're pleased to confirm that a deposit has been made to your Grip Finance account.
-			
-			Account Number: %s
-			Amount Deposited: %s %s
-			Description: %s
-			
-			If you have any questions about this transaction, please contact our support team.
-			
-			Thank you for choosing Grip Finance!
-			
-			Best regards,
-			Team Grip Finance
-`, firstName, lastName, accountNumber, amount.String(), currency, description)
+		body = fmt.Sprintf(`Dear %s,
+
+		Your deposit of %s%s has been confirmed. Your account will be credited within 5 minutes.
+		
+		Deposit Details:
+		Amount: %s%s
+		Date: %s
+		Time: %s
+		
+		For further enquiries, please contact our customer support through the following channels:
+		Email: customerservice@gripfinance.com
+		Phone: 07001234567
+		
+		Thank you for choosing Grip Finance.`, fullName, currencySymbol, amount.String(), currencySymbol, amount.String(), dateStr, timeStr)
 
 	case Withdrawal:
 		subject = "Withdrawal Confirmation"
-		body = fmt.Sprintf(`
-			Dear %s %s,
-			
-			This email confirms a withdrawal from your Grip Finance account.
-			
-			Account Number: %s
-			Amount Withdrawn: %s %s
-			Description: %s
-			
-			If you did not authorize this withdrawal, please contact our support team immediately.
-			
-			Thank you for using Grip Finance!
-			
-			Best regards,
-			Team Grip Finance
-`, firstName, lastName, accountNumber, amount.Abs().String(), currency, description)
+		body = fmt.Sprintf(`Dear %s,
+
+		Your withdrawal of %s%s has been confirmed.
+		
+		Withdrawal Details:
+		Amount: %s%s
+		Date: %s
+		Time: %s
+		
+		For further enquiries, please contact our customer support through the following channels:
+		Email: customerservice@gripfinance.com
+		Phone: 07001234567
+		
+		Thank you for choosing Grip Finance.`, fullName, currencySymbol, amount.Abs().String(), currencySymbol, amount.Abs().String(), dateStr, timeStr)
 
 	case Transfer:
 		subject = "Transfer Confirmation"
-		body = fmt.Sprintf(`
-			Dear %s %s,
-			
-			A transfer has been processed from your Grip Finance account.
-			
-			Account Number: %s
-			Amount Transferred: %s %s
-			Description: %s
-			
-			If you did not authorize this transfer, please contact our support team immediately.
-			
-			Thank you for using Grip Finance!
-			
-			Best regards,
-			Team Grip Finance
-`, firstName, lastName, accountNumber, amount.Abs().String(), currency, description)
+		body = fmt.Sprintf(`Dear %s,
+
+		Your transfer of %s%s has been confirmed and the recipient is expected to be credited within 5 minutes.
+		
+		Transfer Details:
+		Amount: %s%s
+		Date: %s
+		Time: %s
+		
+		For further enquiries, please contact our customer support through the following channels:
+		Email: customerservice@gripfinance.com
+		Phone: 07001234567
+		
+		Thank you for choosing Grip Finance.`, fullName, currencySymbol, amount.Abs().String(), currencySymbol, amount.Abs().String(), dateStr, timeStr)
 
 	case FeeCharged:
 		subject = "Fee Charged Notification"
-		body = fmt.Sprintf(`
-			Dear %s %s,
-			
-			A fee has been charged to your Grip Finance account.
-			
-			Account Number: %s
-			Fee Amount: %s %s
-			Description: %s
-			
-			If you have any questions about this fee, please contact our support team.
-			
-			Thank you for using Grip Finance!
-			
-			Best regards,
-			Team Grip Finance
-`, firstName, lastName, accountNumber, amount.Abs().String(), currency, description)
+		body = fmt.Sprintf(`Dear %s,
+
+		A fee of %s%s has been charged to your account.
+		
+		Fee Details:
+		Amount: %s%s
+		Date: %s
+		Time: %s
+		Description: %s
+		
+		For further enquiries, please contact our customer support through the following channels:
+		Email: customerservice@gripfinance.com
+		Phone: 07001234567
+		
+		Thank you for choosing Grip Finance.`, fullName, currencySymbol, amount.Abs().String(), currencySymbol, amount.Abs().String(), dateStr, timeStr, description)
 
 	default:
 		subject = "Grip Finance Transaction Notification"
-		body = fmt.Sprintf(`
-			Dear %s %s,
-			
-			A transaction has occurred on your Grip Finance account.
-			
-			Account Number: %s
-			Transaction Type: %s
-			Amount: %s %s
-			Description: %s
-			
-			If you have any questions about this transaction, please contact our support team.
-			
-			Thank you for using Grip Finance!
-			
-			Best regards,
-			Team Grip Finance
-`, firstName, lastName, accountNumber, transactionType, amount.Abs().String(), currency, description)
+		body = fmt.Sprintf(`Dear %s,
+
+		A transaction of %s%s has occurred on your account.
+		
+		Transaction Details:
+		Type: %s
+		Amount: %s%s
+		Date: %s
+		Time: %s
+		Description: %s
+		
+		For further enquiries, please contact our customer support through the following channels:
+		Email: customerservice@gripfinance.com
+		Phone: 07001234567
+		
+		Thank you for choosing Grip Finance.`, fullName, currencySymbol, amount.Abs().String(), transactionType, currencySymbol, amount.Abs().String(), dateStr, timeStr, description)
 	}
 
 	return subject, body

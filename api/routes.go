@@ -20,6 +20,7 @@ func SetupRoutes(
 	userService *user_service.UserService,
 	financialOverviewController *controller.FinancialOverviewController,
 	transactionController *controller.TransactionController,
+	investmentController *controller.InvestmentController,
 ) {
 	// Initialize UserHandler
 	verifyUserEmailHandler := handlers.NewUserHandler(userService)
@@ -56,6 +57,13 @@ func SetupRoutes(
 			authorized.POST("/deposit", transactionController.Deposit)
 			authorized.POST("/withdraw", transactionController.Withdraw)
 			authorized.POST("/transfer", transactionController.Transfer)
+
+			//Investment routes
+			authorized.POST("/", investmentController.CreateInvestment)
+			authorized.GET("/user/:userId", investmentController.GetUserInvestmentPortfolio)
+			authorized.GET("/:id", investmentController.GetInvestmentByID)
+			authorized.PUT("/:id", investmentController.UpdateInvestment)
+			authorized.DELETE("/:id", investmentController.DeleteInvestment)
 		}
 	}
 }

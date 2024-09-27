@@ -1,17 +1,12 @@
-package response
+package request
 
 import (
-	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"time"
 )
 
-type InvestmentResponseDto struct {
-	ID           uuid.UUID       `json:"id"`
-	UserID       uuid.UUID       `json:"userId"`
+type UpdateInvestmentRequest struct {
 	Type         string          `json:"type"`
 	Amount       decimal.Decimal `json:"amount"`
-	PurchaseDate time.Time       `json:"purchaseDate"`
 	CurrentValue decimal.Decimal `json:"currentValue"`
 	Status       string          `json:"status"`
 }

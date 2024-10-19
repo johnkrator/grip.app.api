@@ -90,7 +90,7 @@ func backupDatabase(host, port, user, password, dbname string) error {
 	}
 
 	// Construct the pg_dump command to output plain SQL
-	cmd := exec.Command("C:\\Program Files\\PostgreSQL\\15\\bin\\pg_dump",
+	cmd := exec.Command("C:\\Program Files\\PostgreSQL\\17\\bin\\pg_dump",
 		"-h", host,
 		"-p", port,
 		"-U", user,

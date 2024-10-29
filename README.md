@@ -1,6 +1,7 @@
 # Grip
 
-This repository contains a template for how well-structured Grip project is, following best practices and providing a clear separation of concerns.
+This repository contains a template for how well-structured Grip project is, following best practices and providing a
+clear separation of concerns.
 
 ## Project Structure
 
